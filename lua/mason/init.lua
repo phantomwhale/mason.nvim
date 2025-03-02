@@ -1,4 +1,5 @@
 local InstallLocation = require "mason-core.installer.InstallLocation"
+local Registry = require "mason-registry"
 local settings = require "mason.settings"
 
 local M = {}
@@ -20,11 +21,14 @@ function M.setup(config)
         settings.set(config)
     end
 
-    InstallLocation.global():set_env { PATH = settings.current.PATH }
+    local global_location = InstallLocation.global()
+    global_location:set_env { PATH = settings.current.PATH }
+    for _, registry in ipairs(settings.current.registries) do
+        Registry.sources:append(registry)
+    end
 
     require "mason.api.command"
     setup_autocmds()
-    require("mason-registry.sources").set_registries(settings.current.registries)
     M.has_setup = true
 end
 

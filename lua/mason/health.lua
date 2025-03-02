@@ -6,7 +6,6 @@ local control = require "mason-core.async.control"
 local platform = require "mason-core.platform"
 local providers = require "mason-core.providers"
 local registry = require "mason-registry"
-local registry_sources = require "mason-registry.sources"
 local settings = require "mason.settings"
 local spawn = require "mason-core.spawn"
 local version = require "mason.version"
@@ -68,7 +67,7 @@ end
 local function check_registries()
     report_start "mason.nvim [Registries]"
     a.wait(registry.refresh)
-    for source in registry_sources.iter { include_uninstalled = true } do
+    for source in registry.sources:iterate { include_uninstalled = true } do
         if source:is_installed() then
             report_ok(("Registry `%s` is installed."):format(source:get_display_name()))
         else

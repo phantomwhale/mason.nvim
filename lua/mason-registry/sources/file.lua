@@ -14,6 +14,7 @@ local util = require "mason-registry.sources.util"
 local Channel = async_control.Channel
 
 ---@class FileRegistrySourceSpec
+---@field id string
 ---@field path string
 
 ---@class FileRegistrySource : RegistrySource
@@ -28,6 +29,7 @@ function FileRegistrySource:new(spec)
     ---@type FileRegistrySource
     local instance = {}
     setmetatable(instance, self)
+    instance.id = spec.id
     instance.spec = spec
     return instance
 end
@@ -66,10 +68,6 @@ end
 
 function FileRegistrySource:get_all_package_names()
     return _.map(_.prop "name", self:get_all_package_specs())
-end
-
-function FileRegistrySource:get_installer()
-    return Optional.of(_.partial(self.install, self))
 end
 
 ---@async

@@ -10,7 +10,7 @@ describe("mason setup", function()
         settings.set(settings._DEFAULT_SETTINGS)
     end)
 
-    it("should enhance the PATH environment", function()
+    it("should modify the PATH environment", function()
         mason.setup()
         local global_location = InstallLocation.global()
         assert.equals(("%s:/usr/local/bin:/usr/bin"):format(global_location:bin()), vim.env.PATH)

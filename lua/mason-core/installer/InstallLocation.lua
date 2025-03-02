@@ -24,7 +24,6 @@ function InstallLocation:get_dir()
     return self.dir
 end
 
----@async
 function InstallLocation:initialize()
     local Result = require "mason-core.result"
     local fs = require "mason-core.fs"
@@ -37,8 +36,8 @@ function InstallLocation:initialize()
             self:package(),
             self:staging(),
         } do
-            if not fs.async.dir_exists(p) then
-                try(Result.pcall(fs.async.mkdirp, p))
+            if not fs.sync.dir_exists(p) then
+                try(Result.pcall(fs.sync.mkdirp, p))
             end
         end
     end)

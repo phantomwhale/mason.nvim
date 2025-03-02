@@ -1,4 +1,5 @@
 local Optional = require "mason-core.optional"
+local Result = require "mason-core.result"
 local _ = require "mason-core.functional"
 local log = require "mason-core.log"
 
@@ -35,6 +36,10 @@ function LuaRegistrySource:get_package(pkg_name)
     end
 end
 
+function LuaRegistrySource:install()
+    return Result.pcall(require, self.spec.mod)
+end
+
 ---@return string[]
 function LuaRegistrySource:get_all_package_names()
     local index = require(self.spec.mod)
@@ -51,11 +56,6 @@ end
 function LuaRegistrySource:is_installed()
     local ok = pcall(require, self.spec.mod)
     return ok
-end
-
-function LuaRegistrySource:get_installer()
-    local Optional = require "mason-core.optional"
-    return Optional.empty()
 end
 
 function LuaRegistrySource:get_display_name()
