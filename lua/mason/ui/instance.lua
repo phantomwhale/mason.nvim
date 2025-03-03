@@ -607,7 +607,12 @@ local function setup_package(pkg)
     end
 
     mutate_state(function(state)
-        for _, group in ipairs { state.packages.installed, state.packages.uninstalled, state.packages.failed } do
+        for _, group in ipairs {
+            state.packages.installed,
+            state.packages.uninstalled,
+            state.packages.failed,
+            state.packages.outdated_packages,
+        } do
             for i, existing_pkg in ipairs(group) do
                 if existing_pkg.name == pkg.name and pkg ~= existing_pkg then
                     -- New package instance (i.e. from a new, updated, registry source).
@@ -705,13 +710,19 @@ local function setup_packages(packages)
     end)
 end
 
-setup_packages(registry.get_all_packages())
 update_registry_info()
-
-registry.refresh(function()
+if registry.sources:is_all_installed() then
     setup_packages(registry.get_all_packages())
-    update_registry_info()
-end)
+end
+
+if settings.current.ui.check_outdated_packages_on_open then
+    a.run(check_new_package_versions, function() end)
+else
+    registry.refresh(function()
+        setup_packages(registry.get_all_packages())
+        update_registry_info()
+    end)
+end
 
 registry:on("update", function()
     setup_packages(registry.get_all_packages())
@@ -725,15 +736,6 @@ window.init {
         "NormalFloat:MasonNormal",
     },
 }
-
-if settings.current.ui.check_outdated_packages_on_open then
-    vim.defer_fn(
-        a.scope(function()
-            check_new_package_versions()
-        end),
-        100
-    )
-end
 
 return {
     window = window,

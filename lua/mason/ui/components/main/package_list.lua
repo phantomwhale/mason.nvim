@@ -199,8 +199,19 @@ local function Installed(state)
                 Ui.When(state.packages.new_versions_check.is_checking, function()
                     local new_versions_check = state.packages.new_versions_check
                     local styling = new_versions_check.percentage_complete == 1 and p.highlight_block or p.muted_block
+                    local is_all_registries_installed = _.all(_.prop "is_installed", state.info.registries)
+                    local registry_count = #state.info.registries
+                    local text
+                    if registry_count > 1 then
+                        text = p.Comment(
+                            is_all_registries_installed and ("updating %d registries "):format(registry_count)
+                                or ("installing %d registries "):format(registry_count)
+                        )
+                    else
+                        text = p.Comment(is_all_registries_installed and "updating registry " or "installing registry ")
+                    end
                     return Ui.VirtualTextNode {
-                        p.Comment "updating registry ",
+                        text,
                         styling(("%-4s"):format(math.floor(new_versions_check.percentage_complete * 100) .. "%")),
                         styling((" "):rep(new_versions_check.percentage_complete * 15)),
                     }
