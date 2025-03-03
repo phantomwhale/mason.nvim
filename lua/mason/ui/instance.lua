@@ -706,13 +706,17 @@ local function setup_packages(packages)
 end
 
 setup_packages(registry.get_all_packages())
+update_registry_info()
+
+registry.refresh(function()
+    setup_packages(registry.get_all_packages())
+    update_registry_info()
+end)
 
 registry:on("update", function()
     setup_packages(registry.get_all_packages())
     update_registry_info()
 end)
-
-update_registry_info()
 
 window.init {
     effects = effects,

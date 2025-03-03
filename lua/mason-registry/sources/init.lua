@@ -160,6 +160,16 @@ function LazySourceCollection:iterate(opts)
     end
 end
 
+---@param opts? { include_uninstalled?: boolean }
+function LazySourceCollection:to_list(opts)
+    opts = opts or {}
+    local list = {}
+    for source in self:iterate(opts) do
+        table.insert(list, source)
+    end
+    return list
+end
+
 function LazySourceCollection:__tostring()
     return ("LazySourceCollection(list={%s})"):format(table.concat(vim.tbl_map(tostring, self.list), ", "))
 end

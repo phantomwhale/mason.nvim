@@ -132,26 +132,40 @@ function Registry.refresh(callback)
     local installer = require "mason-registry.installer"
 
     local state = installer.get_registry_state()
-    local is_state_ok = state
-        and (os.time() - state.timestamp) <= REGISTRY_STORE_TTL
-        and state.checksum == Registry.sources:checksum()
+    if state and Registry.sources:is_all_installed() then
+        local registry_age = os.time() - state.timestamp
 
-    if is_state_ok and Registry.sources:is_all_installed() then
-        log.debug "Registry refresh not necessary."
-        if callback then
-            callback(true, {})
+        if registry_age <= REGISTRY_STORE_TTL and state.checksum == Registry.sources:checksum() then
+            log.fmt_debug(
+                "Registry refresh is not necessary yet. Registry age=%d, checksum=%s",
+                registry_age,
+                state.checksum
+            )
+            if callback then
+                callback(true, {})
+            end
+            return
         end
-        return
+    end
+
+    local function async_update()
+        return a.wait(function(resolve, reject)
+            Registry.update(function(success, result)
+                if success then
+                    resolve(result)
+                else
+                    reject(result)
+                end
+            end)
+        end)
     end
 
     if not callback then
-        return a.run_blocking(function()
-            return a.wait(Registry.update)
-        end)
+        -- We don't want to error in the synchronous version because of how this function is recommended to be used in
+        -- 3rd party code. If accessing the update result is required, users are recommended to pass a callback.
+        pcall(a.run_blocking, async_update)
     else
-        a.run(function()
-            return a.wait(Registry.update)
-        end, callback)
+        a.run(async_update, callback)
     end
 end
 

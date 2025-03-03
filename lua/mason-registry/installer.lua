@@ -37,22 +37,38 @@ function M.install(sources)
     log.debug("Installing registries.", sources)
     assert(not M.channel, "Cannot install when channel is active.")
     M.channel = OneShotChannel:new()
-    local result = Result.try(function(try)
-        local updated_sources = {}
-        for source in sources:iterate { include_uninstalled = true } do
-            log.trace("Installing registry.", source)
-            try(source:install():map_err(function(err)
-                return ("%s failed to install: %s"):format(source, err)
-            end))
-            table.insert(updated_sources, source)
-        end
+
+    local results = {
+        a.wait_all(_.map(
+            ---@param source RegistrySource
+            function(source)
+                return function()
+                    log.trace("Installing registry.", source)
+                    return source:install():map(_.always(source)):map_err(function(err)
+                        return ("%s failed to install: %s"):format(source, err)
+                    end)
+                end
+            end,
+            sources:to_list { include_uninstalled = true }
+        )),
+    }
+
+    local any_failed = _.any(Result.is_failure, results)
+
+    if any_failed then
+        local unwrap_failures = _.compose(_.map(Result.err_or_nil), _.filter(Result.is_failure))
+        local result = Result.failure(unwrap_failures(results))
+        M.channel:send(result)
+        M.channel = nil
+        return result
+    else
+        local result = Result.success(_.map(Result.get_or_nil, results))
         a.scheduler()
         update_registry_state(sources, os.time())
-        return updated_sources
-    end)
-    M.channel:send(result)
-    M.channel = nil
-    return result
+        M.channel:send(result)
+        M.channel = nil
+        return result
+    end
 end
 
 return M
