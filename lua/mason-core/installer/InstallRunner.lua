@@ -31,7 +31,7 @@ function InstallRunner:new(handle, semaphore)
     return instance
 end
 
----@alias InstallRunnerCallback fun(success: true, receipt: InstallReceipt) | fun(success: false, handle: InstallHandle, error: any)
+---@alias InstallRunnerCallback fun(success: true, receipt: InstallReceipt) | fun(success: false, error: any)
 
 ---@param opts PackageInstallOpts
 ---@param callback? InstallRunnerCallback

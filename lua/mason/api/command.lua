@@ -25,61 +25,11 @@ local get_valid_packages = _.filter_map(function(pkg_specifier)
     end
 end)
 
----@param handles InstallHandle[]
-local function join_handles(handles)
-    local a = require "mason-core.async"
-    local Optional = require "mason-core.optional"
-
-    _.each(
-        ---@param handle InstallHandle
-        function(handle)
-            handle:on("stdout", vim.schedule_wrap(vim.api.nvim_out_write))
-            handle:on("stderr", vim.schedule_wrap(vim.api.nvim_err_write))
-        end,
-        handles
-    )
-
-    a.run_blocking(function()
-        a.wait_all(_.map(
-            ---@param handle InstallHandle
-            function(handle)
-                return function()
-                    a.wait(function(resolve)
-                        if handle:is_closed() then
-                            resolve()
-                        else
-                            handle:once("closed", resolve)
-                        end
-                    end)
-                end
-            end,
-            handles
-        ))
-        local failed_packages = _.filter_map(function(handle)
-            -- TODO: Use new install callback to determine success.
-            if not handle.package:is_installed() then
-                return Optional.of(handle.package.name)
-            else
-                return Optional.empty()
-            end
-        end, handles)
-
-        if _.length(failed_packages) > 0 then
-            a.wait(vim.schedule) -- wait for scheduler for logs to finalize
-            a.wait(vim.schedule) -- logs have been written
-            vim.api.nvim_err_writeln ""
-            vim.api.nvim_err_writeln(
-                ("The following packages failed to install: %s"):format(_.join(", ", failed_packages))
-            )
-            vim.cmd [[1cq]]
-        end
-    end)
-end
-
 ---@param package_specifiers string[]
 ---@param opts? table<string, string | boolean>
 local function MasonInstall(package_specifiers, opts)
     opts = opts or {}
+    local a = require "mason-core.async"
     local registry = require "mason-registry"
     local Optional = require "mason-core.optional"
 
@@ -105,7 +55,50 @@ local function MasonInstall(package_specifiers, opts)
             -- This is to avoid things like scripts silently not erroring even if they've provided one or more invalid packages.
             return vim.cmd [[1cq]]
         end
-        join_handles(install_packages(valid_packages))
+        a.run_blocking(function()
+            local results = {
+                a.wait_all(_.map(
+                    ---@param target { pkg: Package, version: string? }
+                    function(target)
+                        return function()
+                            if target.pkg:is_installing() then
+                                return
+                            end
+                            return a.wait(function(resolve)
+                                local handle = target.pkg:install({
+                                    version = target.version,
+                                    debug = opts.debug,
+                                    force = opts.force,
+                                    strict = opts.strict,
+                                    target = opts.target,
+                                }, function(success, err)
+                                    resolve { success, target.pkg, err }
+                                end)
+                                if not opts.quiet then
+                                    handle
+                                        :on("stdout", vim.schedule_wrap(vim.api.nvim_out_write))
+                                        :on("stderr", vim.schedule_wrap(vim.api.nvim_err_write))
+                                end
+                            end)
+                        end
+                    end,
+                    valid_packages
+                )),
+            }
+            a.scheduler()
+
+            local is_failure = _.compose(_.equals(false), _.head)
+            if _.any(is_failure, results) then
+                local failures = _.filter(is_failure, results)
+                local failed_packages = _.map(_.nth(2), failures)
+                for _, failure in ipairs(failures) do
+                    local _, pkg, error = unpack(failure)
+                    vim.api.nvim_err_writeln(("Package %s failed with the following error:"):format(pkg.name))
+                    vim.api.nvim_err_writeln(tostring(error))
+                end
+                vim.cmd [[1cq]]
+            end
+        end)
     else
         local ui = require "mason.ui"
         ui.open()
