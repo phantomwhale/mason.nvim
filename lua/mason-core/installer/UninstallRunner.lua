@@ -44,8 +44,9 @@ function UninstallRunner:execute(opts, callback)
             local receipt = pkg:get_receipt(location):or_else(nil)
             if receipt == nil then
                 log.fmt_warn("Receipt not found when uninstalling %s", pkg)
+            else
+                try(pkg:unlink(location))
             end
-            try(pkg:unlink(location))
             fs.sync.rmrf(location:package(pkg.name))
             return receipt
         end):get_or_throw()
