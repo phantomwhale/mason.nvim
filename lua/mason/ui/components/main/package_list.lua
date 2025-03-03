@@ -186,19 +186,14 @@ local get_outdated_packages_preview = _.if_else(
 ---@param state InstallerUiState
 local function Installed(state)
     return Ui.Node {
-        Ui.Keybind(
-            settings.current.ui.keymaps.check_outdated_packages,
-            "CHECK_NEW_VISIBLE_PACKAGE_VERSIONS",
-            nil,
-            true
-        ),
+        Ui.Keybind(settings.current.ui.keymaps.check_outdated_packages, "UPDATE_REGISTRY", nil, true),
         PackageListContainer {
             state = state,
             heading = Ui.Node {
                 Ui.HlTextNode(p.heading "Installed"),
-                Ui.When(state.packages.new_versions_check.is_checking, function()
-                    local new_versions_check = state.packages.new_versions_check
-                    local styling = new_versions_check.percentage_complete == 1 and p.highlight_block or p.muted_block
+                Ui.When(state.info.registry_update.in_progress, function()
+                    local styling = state.info.registry_update.percentage_complete == 1 and p.highlight_block
+                        or p.muted_block
                     local is_all_registries_installed = _.all(_.prop "is_installed", state.info.registries)
                     local registry_count = #state.info.registries
                     local text
@@ -212,12 +207,14 @@ local function Installed(state)
                     end
                     return Ui.VirtualTextNode {
                         text,
-                        styling(("%-4s"):format(math.floor(new_versions_check.percentage_complete * 100) .. "%")),
-                        styling((" "):rep(new_versions_check.percentage_complete * 15)),
+                        styling(
+                            ("%-4s"):format(math.floor(state.info.registry_update.percentage_complete * 100) .. "%")
+                        ),
+                        styling((" "):rep(state.info.registry_update.percentage_complete * 15)),
                     }
                 end),
                 Ui.When(
-                    not state.packages.new_versions_check.is_checking and #state.packages.outdated_packages > 0,
+                    not state.info.registry_update.in_progress and #state.packages.outdated_packages > 0,
                     function()
                         return Ui.VirtualTextNode {
                             p.muted "Press ",

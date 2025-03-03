@@ -29,7 +29,7 @@ return function(state)
                 { p.Comment "https://github.com/williamboman/mason.nvim" },
             },
         }),
-        Ui.When(not state.packages.new_versions_check.is_checking and #uninstalled_registries > 0, function()
+        Ui.When(not state.info.registry_update.in_progress and #uninstalled_registries > 0, function()
             return Ui.CascadingStyleNode({ "INDENT" }, {
                 Ui.EmptyLine(),
                 Ui.HlTextNode {
@@ -49,7 +49,7 @@ return function(state)
             })
         end),
         Ui.When(
-            not state.packages.new_versions_check.is_checking and state.info.registry_update_error,
+            not state.info.registry_update.in_progress and state.info.registry_update.error,
             Ui.CascadingStyleNode({ "INDENT" }, {
                 Ui.HlTextNode {
                     {
@@ -57,7 +57,7 @@ return function(state)
                     },
                     {
                         p.none "  ",
-                        p.Comment(state.info.registry_update_error),
+                        p.Comment(state.info.registry_update.error),
                     },
                 },
                 Ui.EmptyLine(),

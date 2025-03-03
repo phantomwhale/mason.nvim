@@ -113,10 +113,16 @@ function Registry.update(callback)
             log.trace "Registry update already in progress."
             return installer.channel:receive():get_or_throw()
         else
+            Registry:emit("update:start", Registry.sources)
             return installer
-                .install(Registry.sources)
+                .install(Registry.sources, function(finished, all)
+                    Registry:emit("update:progress", finished, all)
+                end)
                 :on_success(function(updated_registries)
-                    Registry:emit("update", updated_registries)
+                    Registry:emit("update:success", updated_registries)
+                end)
+                :on_failure(function(errors)
+                    Registry:emit("update:failed", errors)
                 end)
                 :get_or_throw()
         end

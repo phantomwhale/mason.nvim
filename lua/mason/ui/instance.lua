@@ -60,8 +60,12 @@ local INITIAL_STATE = {
         used_disk_space = nil,
         ---@type { name: string, is_installed: boolean }[]
         registries = {},
-        ---@type string?
-        registry_update_error = nil,
+        registry_update = {
+            ---@type string?
+            error = nil,
+            in_progress = false,
+            percentage_complete = 0,
+        },
     },
     view = {
         is_searching = false,
@@ -79,10 +83,6 @@ local INITIAL_STATE = {
     packages = {
         ---@type Package[]
         outdated_packages = {},
-        new_versions_check = {
-            is_checking = false,
-            percentage_complete = 0,
-        },
         ---@type Package[]
         all = {},
         ---@type table<string, boolean>
@@ -439,7 +439,6 @@ local function toggle_expand_package(event)
     end)
 end
 
----@async
 ---@param pkg Package
 local function check_new_package_version(pkg)
     local installed_version = pkg:get_installed_version()
@@ -460,30 +459,8 @@ local function check_new_package_version(pkg)
     end
 end
 
----@async
 local function check_new_package_versions()
     local state = get_state()
-    if state.packages.new_versions_check.is_checking then
-        return
-    end
-
-    mutate_state(function(state)
-        state.packages.outdated_packages = {}
-        state.packages.new_versions_check.is_checking = true
-        state.packages.new_versions_check.percentage_complete = 0
-    end)
-
-    do
-        local success, err = a.wait(registry.update)
-        mutate_state(function(state)
-            state.packages.new_versions_check.percentage_complete = 1
-            if not success then
-                state.info.registry_update_error = tostring(_.gsub("\n", " ", err))
-            else
-                state.info.registry_update_error = nil
-            end
-        end)
-    end
 
     local outdated_packages = {}
 
@@ -499,15 +476,6 @@ local function check_new_package_versions()
                 state.packages.states[pkg.name].new_version = nil
             end
         end
-    end)
-
-    a.sleep(1000)
-    mutate_state(function(state)
-        state.packages.outdated_packages = outdated_packages
-        state.packages.new_versions_check.is_checking = false
-        state.packages.new_versions_check.current = 0
-        state.packages.new_versions_check.total = 0
-        state.packages.new_versions_check.percentage_complete = 0
     end)
 end
 
@@ -579,7 +547,9 @@ end
 
 local effects = {
     ["CHECK_NEW_PACKAGE_VERSION"] = a.scope(_.compose(_.partial(pcall, check_new_package_version), _.prop "payload")),
-    ["CHECK_NEW_VISIBLE_PACKAGE_VERSIONS"] = a.scope(check_new_package_versions),
+    ["UPDATE_REGISTRY"] = function()
+        registry.update()
+    end,
     ["CLEAR_LANGUAGE_FILTER"] = clear_filter,
     ["CLEAR_SEARCH_MODE"] = clear_search_mode,
     ["CLOSE_WINDOW"] = window.close,
@@ -710,24 +680,62 @@ local function setup_packages(packages)
     end)
 end
 
+registry:on("update:failed", function(errors)
+    mutate_state(function(state)
+        state.info.registry_update.percentage_complete = 0
+        state.info.registry_update.in_progress = false
+        state.info.registry_update.error = table.concat(errors, " - ")
+    end)
+end)
+
+registry:on("update:success", function()
+    setup_packages(registry.get_all_packages())
+    update_registry_info()
+    check_new_package_versions()
+
+    -- Wait with resetting the state in order to keep displaying the update message
+    vim.defer_fn(function()
+        mutate_state(function(state)
+            if state.info.registry_update.percentage_complete ~= 1 then
+                -- New update was started already, don't reset state
+                return
+            end
+            state.info.registry_update.in_progress = false
+            state.info.registry_update.percentage_complete = 0
+        end)
+    end, 1000)
+end)
+
+registry:on("update:start", function()
+    mutate_state(function(state)
+        state.packages.outdated_packages = {}
+        state.info.registry_update.error = nil
+        state.info.registry_update.in_progress = true
+        state.info.registry_update.percentage_complete = 0
+    end)
+end)
+
+registry:on("update:progress", function(finished, all)
+    mutate_state(function(state)
+        state.info.registry_update.percentage_complete = #finished / #all
+    end)
+end)
+
 update_registry_info()
 if registry.sources:is_all_installed() then
     setup_packages(registry.get_all_packages())
 end
 
 if settings.current.ui.check_outdated_packages_on_open then
-    a.run(check_new_package_versions, function() end)
+    registry.update()
 else
-    registry.refresh(function()
-        setup_packages(registry.get_all_packages())
-        update_registry_info()
+    registry.refresh(function(success, updated_registries)
+        if success and #updated_registries == 0 then
+            setup_packages(registry.get_all_packages())
+            update_registry_info()
+        end
     end)
 end
-
-registry:on("update", function()
-    setup_packages(registry.get_all_packages())
-    update_registry_info()
-end)
 
 window.init {
     effects = effects,

@@ -32,11 +32,15 @@ end
 
 ---@async
 ---@param sources LazySourceCollection
+---@param on_progress fun(finished: RegistrySource[], all: RegistrySource[])
 ---@return Result # Result<RegistrySource[]>
-function M.install(sources)
+function M.install(sources, on_progress)
     log.debug("Installing registries.", sources)
     assert(not M.channel, "Cannot install when channel is active.")
     M.channel = OneShotChannel:new()
+
+    local finished_registries = {}
+    local registries = sources:to_list { include_uninstalled = true }
 
     local results = {
         a.wait_all(_.map(
@@ -44,12 +48,19 @@ function M.install(sources)
             function(source)
                 return function()
                     log.trace("Installing registry.", source)
-                    return source:install():map(_.always(source)):map_err(function(err)
-                        return ("%s failed to install: %s"):format(source, err)
-                    end)
+                    return source
+                        :install()
+                        :map(_.always(source))
+                        :map_err(function(err)
+                            return ("%s failed to install: %s"):format(source, err)
+                        end)
+                        :on_success(function()
+                            table.insert(finished_registries, source)
+                            on_progress(finished_registries, registries)
+                        end)
                 end
             end,
-            sources:to_list { include_uninstalled = true }
+            registries
         )),
     }
 
