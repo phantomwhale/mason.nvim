@@ -1,4 +1,5 @@
 local Pkg = require "mason-core.package"
+local test_helpers = require "mason-test.helpers"
 local registry = require "mason-registry"
 
 describe("mason-registry", function()
@@ -20,5 +21,12 @@ describe("mason-registry", function()
 
     it("should get all package specs", function()
         assert.equals(3, #registry.get_all_package_specs())
+    end)
+
+    it("should check if package is installed", function ()
+        local dummy = registry.get_package "dummy"
+        assert.is_false(registry.is_installed "dummy")
+        test_helpers.sync_install(dummy)
+        assert.is_true(registry.is_installed "dummy")
     end)
 end)

@@ -13,8 +13,8 @@ Registry.aliases = {}
 
 ---@param pkg_name string
 function Registry.is_installed(pkg_name)
-    local ok, stat = pcall(uv.fs_stat, InstallLocation.global():package(pkg_name), "r", 438)
-    return ok and stat.type == "directory"
+    local stat = uv.fs_stat(InstallLocation.global():package(pkg_name))
+    return stat ~= nil and stat.type == "directory"
 end
 
 ---Returns an instance of the Package class if the provided package name exists. This function errors if a package
