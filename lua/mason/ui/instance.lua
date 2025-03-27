@@ -460,11 +460,8 @@ local function check_new_package_version(pkg)
 end
 
 local function check_new_package_versions()
-    local state = get_state()
-
-    local outdated_packages = {}
-
     mutate_state(function(state)
+        local outdated_packages = {}
         for _, pkg in ipairs(state.packages.installed) do
             local current_version = pkg:get_installed_version()
             local latest_version = pkg:get_latest_version()
@@ -476,6 +473,7 @@ local function check_new_package_versions()
                 state.packages.states[pkg.name].new_version = nil
             end
         end
+        state.packages.outdated_packages = outdated_packages
     end)
 end
 
