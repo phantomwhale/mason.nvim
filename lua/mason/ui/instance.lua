@@ -735,9 +735,19 @@ else
     end)
 end
 
+local border = settings.current.ui.border
+
+if border == nil then
+    if vim.fn.has "nvim-0.11" == 1 then
+        border = vim.o.winborder
+    else
+        border = "none"
+    end
+end
+
 window.init {
     effects = effects,
-    border = settings.current.ui.border,
+    border = border,
     winhighlight = {
         "NormalFloat:MasonNormal",
     },

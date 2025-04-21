@@ -185,7 +185,7 @@ local function create_popup_window_opts(opts, sizes_only)
     local width = calc_size(settings.current.ui.width, columns)
     local row = math.floor((lines - height) / 2)
     local col = math.floor((columns - width) / 2)
-    if opts.border ~= "none" then
+    if opts.border ~= "none" and opts.border ~= "" then
         row = math.max(row - 1, 0)
         col = math.max(col - 1, 0)
     end
@@ -216,6 +216,7 @@ local function create_backdrop_window_opts()
         col = 0,
         style = "minimal",
         focusable = false,
+        border = "none",
         zindex = 44,
     }
 end
