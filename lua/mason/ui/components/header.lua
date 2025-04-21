@@ -2,6 +2,7 @@ local Ui = require "mason-core.ui"
 local _ = require "mason-core.functional"
 local p = require "mason.ui.palette"
 local settings = require "mason.settings"
+local version = require "mason.version"
 
 ---@param state InstallerUiState
 return function(state)
@@ -12,9 +13,11 @@ return function(state)
             Ui.HlTextNode {
                 Ui.When(state.view.is_showing_help, {
                     p.header_secondary(" " .. state.header.title_prefix .. " mason.nvim "),
+                    p.header_secondary(version.VERSION .. " "),
                     p.none((" "):rep(#state.header.title_prefix + 1)),
                 }, {
                     p.header " mason.nvim ",
+                    p.header(version.VERSION .. " "),
                     state.view.is_searching and p.Comment " (search mode, press <Esc> to clear)" or p.none "",
                 }),
                 Ui.When(state.view.is_showing_help, {
