@@ -47,6 +47,7 @@ end
 ---@field has_failed boolean
 ---@field latest_spawn string?
 ---@field linked_executables table<string, string>?
+---@field installed_purl string?
 ---@field lsp_settings_schema table?
 ---@field new_version string?
 ---@field short_tailed_output string?
@@ -213,6 +214,7 @@ local function create_initial_package_state()
         has_failed = false,
         latest_spawn = nil,
         linked_executables = nil,
+        installed_purl = nil,
         lsp_settings_schema = nil,
         new_version = nil,
         short_tailed_output = nil,
@@ -304,6 +306,7 @@ local function hydrate_detailed_package_state(pkg)
         function(receipt)
             mutate_state(function(state)
                 state.packages.states[pkg.name].linked_executables = receipt:get_links().bin
+                state.packages.states[pkg.name].installed_purl = receipt:get_installed_purl()
             end)
         end
     )

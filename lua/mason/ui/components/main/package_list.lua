@@ -72,6 +72,13 @@ local function ExpandedPackageInfo(state, pkg, is_installed)
                     p.muted "latest version",
                     p.muted(pkg_state.new_version),
                 },
+                pkg_state.installed_purl and {
+                    p.muted "installed purl",
+                    p.highlight(pkg_state.installed_purl),
+                } or {
+                    p.muted "purl",
+                    p.highlight(pkg.spec.source.id),
+                },
                 {
                     p.muted "homepage",
                     pkg.spec.homepage and p.highlight(pkg.spec.homepage) or p.muted "-",

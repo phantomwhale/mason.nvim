@@ -70,6 +70,16 @@ describe("receipt ::", function()
         assert.is_true(receipt:is_schema_min "2.0")
     end)
 
+    it("should retrieve purl information", function()
+        local receipt_1_0 = InstallReceipt:new(fixture "1.0.json")
+        local receipt_1_1 = InstallReceipt:new(fixture "1.1.json")
+        local receipt_2_0 = InstallReceipt:new(fixture "2.0.json")
+
+        assert.is_nil(receipt_1_0:get_installed_purl())
+        assert.equals("pkg:npm/%40angular/language-server@16.1.8", receipt_1_1:get_installed_purl())
+        assert.equals("pkg:npm/%40angular/language-server@19.1.0", receipt_2_0:get_installed_purl())
+    end)
+
     describe("schema versions ::", function()
         it("should check minimum compatibility", function()
             local receipt_1_0 = InstallReceipt:new { schema_version = "1.0" }

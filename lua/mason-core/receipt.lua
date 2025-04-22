@@ -56,6 +56,12 @@ function InstallReceipt:get_source()
     return self.primary_source --[[@as InstallReceiptSource]]
 end
 
+---@return string?
+function InstallReceipt:get_installed_purl()
+    local source = self:get_source()
+    return source.id
+end
+
 function InstallReceipt:get_raw_source()
     if self:is_schema_min "2.0" then
         return self.source.raw
