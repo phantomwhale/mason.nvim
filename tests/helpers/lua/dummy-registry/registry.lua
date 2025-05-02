@@ -1,7 +1,4 @@
-local Pkg = require "mason-core.package"
-
-return Pkg:new {
-    schema = "registry+v1",
+return {
     name = "registry",
     description = [[This is a dummy package.]],
     homepage = "https://example.com",

@@ -1,8 +1,6 @@
-local Optional = require "mason-core.optional"
 local Result = require "mason-core.result"
 local _ = require "mason-core.functional"
 local a = require "mason-core.async"
-local async_control = require "mason-core.async.control"
 local async_uv = require "mason-core.async.uv"
 local fs = require "mason-core.fs"
 local log = require "mason-core.log"
@@ -10,8 +8,6 @@ local path = require "mason-core.path"
 local process = require "mason-core.process"
 local spawn = require "mason-core.spawn"
 local util = require "mason-registry.sources.util"
-
-local Channel = async_control.Channel
 
 ---@class FileRegistrySourceSpec
 ---@field id string

@@ -42,8 +42,8 @@ describe("Package ::", function()
                 name = "Package name",
                 description = "Package description",
                 homepage = "https://example.com",
-                categories = { Pkg.Cat.LSP },
-                languages = { Pkg.Lang.Rust },
+                categories = { "LSP" },
+                languages = { "Rust" },
                 licenses = {},
                 source = {
                     id = "pkg:mason/package@1",

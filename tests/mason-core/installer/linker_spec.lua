@@ -40,7 +40,6 @@ describe("linker", function()
     end)
 
     it("should symlink executable on Unix", function()
-        local dummy = registry.get_package "dummy"
         local ctx = test_helpers.create_context()
 
         stub(fs.async, "file_exists")
@@ -70,7 +69,6 @@ describe("linker", function()
     end)
 
     it("should write executable wrapper on Windows", function()
-        local dummy = registry.get_package "dummy"
         local ctx = test_helpers.create_context()
 
         platform.is.darwin = false
@@ -110,7 +108,6 @@ describe("linker", function()
     end)
 
     it("should symlink share files", function()
-        local dummy = registry.get_package "dummy"
         local ctx = test_helpers.create_context()
 
         stub(fs.async, "mkdirp")
@@ -150,7 +147,6 @@ describe("linker", function()
     end)
 
     it("should copy share files on Windows", function()
-        local dummy = registry.get_package "dummy"
         local ctx = test_helpers.create_context()
 
         platform.is.darwin = false

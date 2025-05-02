@@ -1,7 +1,6 @@
-local Optional = require "mason-core.optional"
 local Result = require "mason-core.result"
 local _ = require "mason-core.functional"
-local log = require "mason-core.log"
+local util = require "mason-registry.sources.util"
 
 ---@class LuaRegistrySourceSpec
 ---@field id string
@@ -9,6 +8,7 @@ local log = require "mason-core.log"
 
 ---@class LuaRegistrySource : RegistrySource
 ---@field private spec LuaRegistrySourceSpec
+---@field buffer { specs: RegistryPackageSpec[], instances: table<string, Package> }?
 local LuaRegistrySource = {}
 LuaRegistrySource.__index = LuaRegistrySource
 
@@ -25,37 +25,52 @@ end
 ---@param pkg_name string
 ---@return Package?
 function LuaRegistrySource:get_package(pkg_name)
-    local index = require(self.spec.mod)
-    if index[pkg_name] then
-        local ok, mod = pcall(require, index[pkg_name])
-        if ok then
-            return mod
-        else
-            log.fmt_warn("Unable to load %s from %s: %s", pkg_name, self, mod)
-        end
-    end
+    return self:get_buffer().instances[pkg_name]
+end
+
+---@param specs RegistryPackageSpec[]
+function LuaRegistrySource:reload(specs)
+    self.buffer = _.assoc("specs", specs, self.buffer or {})
+    self.buffer.instances = _.compose(
+        _.index_by(_.prop "name"),
+        _.map(util.hydrate_package(self.buffer.instances or {}))
+    )(self:get_all_package_specs())
+    return self.buffer
 end
 
 function LuaRegistrySource:install()
-    return Result.pcall(require, self.spec.mod)
+    return Result.try(function(try)
+        local index = try(Result.pcall(require, self.spec.mod))
+        ---@type RegistryPackageSpec[]
+        local specs = {}
+
+        for _, mod in pairs(index) do
+            table.insert(specs, try(Result.pcall(require, mod)))
+        end
+
+        try(Result.pcall(self.reload, self, specs))
+    end)
 end
 
 ---@return string[]
 function LuaRegistrySource:get_all_package_names()
-    local index = require(self.spec.mod)
-    return vim.tbl_keys(index)
+    return _.map(_.prop "name", self:get_all_package_specs())
 end
 
 ---@return RegistryPackageSpec[]
 function LuaRegistrySource:get_all_package_specs()
-    return _.filter_map(function(name)
-        return Optional.of_nilable(self:get_package(name)):map(_.prop "spec")
-    end, self:get_all_package_names())
+    return _.filter_map(util.map_registry_spec, self:get_buffer().specs)
+end
+
+function LuaRegistrySource:get_buffer()
+    return self.buffer or {
+        specs = {},
+        instances = {},
+    }
 end
 
 function LuaRegistrySource:is_installed()
-    local ok = pcall(require, self.spec.mod)
-    return ok
+    return self.buffer ~= nil
 end
 
 function LuaRegistrySource:get_display_name()

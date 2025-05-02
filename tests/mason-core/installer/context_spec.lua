@@ -94,7 +94,6 @@ cmd.exe /C echo %GREETING% %*]]
 
     it("should write Node exec wrapper", function()
         local js_rel_path = path.concat { "some", "obscure", "path", "server.js" }
-        local dummy = registry.get_package "dummy"
         local ctx = test_helpers.create_context()
         stub(ctx, "write_shell_exec_wrapper")
         stub(ctx.fs, "file_exists")
@@ -112,7 +111,6 @@ cmd.exe /C echo %GREETING% %*]]
 
     it("should write Ruby exec wrapper", function()
         local js_rel_path = path.concat { "some", "obscure", "path", "server.js" }
-        local dummy = registry.get_package "dummy"
         local ctx = test_helpers.create_context()
         stub(ctx, "write_shell_exec_wrapper")
         stub(ctx.fs, "file_exists")
@@ -147,7 +145,6 @@ cmd.exe /C echo %GREETING% %*]]
     end)
 
     it("should write Python exec wrapper", function()
-        local dummy = registry.get_package "dummy"
         local ctx = test_helpers.create_context()
         stub(ctx.cwd, "get")
         ctx.cwd.get.returns "/tmp/placeholder"
@@ -183,7 +180,6 @@ cmd.exe /C echo %GREETING% %*]]
     end)
 
     it("should write exec wrapper", function()
-        local dummy = registry.get_package "dummy"
         local exec_rel_path = path.concat { "obscure", "path", "to", "server" }
         local ctx = test_helpers.create_context()
         stub(ctx, "write_shell_exec_wrapper")
@@ -219,7 +215,6 @@ cmd.exe /C echo %GREETING% %*]]
 
     it("should write PHP exec wrapper", function()
         local php_rel_path = path.concat { "some", "obscure", "path", "cli.php" }
-        local dummy = registry.get_package "dummy"
         local ctx = test_helpers.create_context()
         stub(ctx, "write_shell_exec_wrapper")
         stub(ctx.fs, "file_exists")
