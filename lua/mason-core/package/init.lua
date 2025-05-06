@@ -105,10 +105,11 @@ local function validate_spec(spec)
 end
 
 ---@param spec RegistryPackageSpec
-function Package:new(spec)
+---@param reg RegistrySource
+function Package:new(spec, reg)
     validate_spec(spec)
     ---@type Package
-    local instance = AbstractPackage.new(self, spec)
+    local instance = AbstractPackage.new(self, spec, reg)
     instance.local_semaphore = Semaphore:new(1)
     return instance
 end

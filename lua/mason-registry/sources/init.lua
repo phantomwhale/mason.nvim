@@ -6,6 +6,7 @@
 ---@field get_display_name fun(self: RegistrySource): string
 ---@field is_installed fun(self: RegistrySource): boolean
 ---@field install fun(self: RegistrySource): Result
+---@field serialize fun(self: RegistrySource): InstallReceiptRegistry
 
 ---@alias RegistrySourceType '"github"' | '"lua"' | '"file"'
 

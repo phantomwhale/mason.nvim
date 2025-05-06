@@ -33,7 +33,7 @@ function LuaRegistrySource:reload(specs)
     self.buffer = _.assoc("specs", specs, self.buffer or {})
     self.buffer.instances = _.compose(
         _.index_by(_.prop "name"),
-        _.map(util.hydrate_package(self.buffer.instances or {}))
+        _.map(util.hydrate_package(self, self.buffer.instances or {}))
     )(self:get_all_package_specs())
     return self.buffer
 end
@@ -79,6 +79,13 @@ function LuaRegistrySource:get_display_name()
     else
         return ("require(%q) [uninstalled]"):format(self.spec.mod)
     end
+end
+
+function LuaRegistrySource:serialize()
+    return {
+        proto = "lua",
+        mod = self.id,
+    }
 end
 
 function LuaRegistrySource:__tostring()

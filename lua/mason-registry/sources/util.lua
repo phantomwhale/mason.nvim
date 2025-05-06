@@ -18,9 +18,10 @@ function M.map_registry_spec(spec)
     return Optional.of(spec)
 end
 
+---@param registry RegistrySource
 ---@param buffer table<string, Package>
 ---@param spec RegistryPackageSpec
-M.hydrate_package = _.curryN(function(buffer, spec)
+M.hydrate_package = _.curryN(function(registry, buffer, spec)
     -- hydrate Pkg.Lang/License index
     _.each(function(lang)
         local _ = Package.Lang[lang]
@@ -29,13 +30,15 @@ M.hydrate_package = _.curryN(function(buffer, spec)
         local _ = Package.License[lang]
     end, spec.licenses)
 
-    local pkg = buffer[spec.name]
-    if pkg then
+    local existing_instance = buffer[spec.name]
+    if existing_instance then
         -- Apply spec to the existing Package instances. This is important as to not have lingering package instances.
-        pkg.spec = spec
-        return pkg
+        existing_instance:update(spec, registry)
+        return existing_instance
     end
-    return Package:new(spec)
-end, 2)
+
+    local new_instance = Package:new(spec, registry)
+    return new_instance
+end, 3)
 
 return M

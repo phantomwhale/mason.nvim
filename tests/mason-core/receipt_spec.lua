@@ -67,6 +67,16 @@ describe("receipt ::", function()
             opt = {},
             share = {},
         }, receipt:get_links())
+        assert.same({
+            name = "mason-registry",
+            version = "2025-05-03-lawful-clave",
+            checksums = {
+                ["registry.json"] = "4ae083fe8e50d0bea5382be05c7ede8d2def55ff2b6b89dc129b153039d9f2a2",
+                ["registry.json.zip"] = "2116d5db7676afe7052de329db4dfbf656054d8c35ce12414eb9d58561b2fde9",
+            },
+            proto = "github",
+            namespace = "mason-org",
+        }, receipt:get_registry())
         assert.is_true(receipt:is_schema_min "2.0")
     end)
 

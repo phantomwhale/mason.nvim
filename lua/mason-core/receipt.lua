@@ -12,13 +12,16 @@ local M = {}
 ---@field share? table<string, string>
 ---@field opt? table<string, string>
 
+---@alias InstallReceiptRegistry { proto: '"github"' | '"lua"' | '"file"' }
+
 ---@class InstallReceipt
----@field public name string
----@field public schema_version InstallReceiptSchemaVersion
----@field public metrics {start_time:integer, completion_time:integer}
----@field public source InstallReceiptSource
----@field public links InstallReceiptLinks
----@field public install_options PackageInstallOpts
+---@field name string
+---@field schema_version InstallReceiptSchemaVersion
+---@field metrics {start_time:integer, completion_time:integer}
+---@field source InstallReceiptSource
+---@field links InstallReceiptLinks
+---@field install_options PackageInstallOpts
+---@field registry InstallReceiptRegistry
 local InstallReceipt = {}
 InstallReceipt.__index = InstallReceipt
 
@@ -68,6 +71,10 @@ function InstallReceipt:get_raw_source()
     else
         return nil
     end
+end
+
+function InstallReceipt:get_registry()
+    return self.registry
 end
 
 function InstallReceipt:get_install_options()
@@ -148,12 +155,19 @@ function InstallReceiptBuilder:with_start_time(seconds, microseconds)
     return self
 end
 
+---@param registry InstallReceiptRegistry
+function InstallReceiptBuilder:with_registry(registry)
+    self.registry = registry
+    return self
+end
+
 function InstallReceiptBuilder:build()
     assert(self.name, "name is required")
     assert(self.start_time, "start_time is required")
     assert(self.completion_time, "completion_time is required")
     assert(self.source, "source is required")
     assert(self.install_options, "install_options is required")
+    assert(self.registry, "registry is required")
     return InstallReceipt:new {
         name = self.name,
         schema_version = "2.0",
@@ -163,6 +177,7 @@ function InstallReceiptBuilder:build()
         },
         install_options = self.install_options,
         source = self.source,
+        registry = self.registry,
         links = self.links,
     }
 end

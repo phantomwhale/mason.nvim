@@ -268,6 +268,7 @@ describe("InstallRunner ::", function()
             test_helpers.sync_runner_execute(runner, {})
 
             local receipt_file = location:package "dummy/mason-receipt.json"
+
             assert.is_true(fs.sync.file_exists(receipt_file))
             assert.is_true(match.tbl_containing {
                 name = "dummy",
@@ -276,6 +277,10 @@ describe("InstallRunner ::", function()
                 metrics = match.tbl_containing {
                     completion_time = match.is_number(),
                     start_time = match.is_number(),
+                },
+                registry = match.same {
+                    proto = "lua",
+                    mod = "dummy-registry.index",
                 },
                 source = match.same {
                     id = "pkg:mason/dummy@1.0.0",

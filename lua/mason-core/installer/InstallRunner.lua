@@ -106,6 +106,7 @@ function InstallRunner:execute(opts, callback)
             try(self:acquire_lock(opts.force))
 
             context.receipt:with_start_time(vim.loop.gettimeofday())
+            context.receipt:with_registry(context.package.registry:serialize())
 
             -- 1. initialize working directory
             try(context.cwd:initialize())

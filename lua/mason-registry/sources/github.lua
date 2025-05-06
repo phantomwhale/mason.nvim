@@ -61,7 +61,7 @@ function GitHubRegistrySource:reload()
     if not self:is_installed() then
         return
     end
-    self.buffer = _.compose(_.index_by(_.prop "name"), _.map(util.hydrate_package(self.buffer or {})))(
+    self.buffer = _.compose(_.index_by(_.prop "name"), _.map(util.hydrate_package(self, self.buffer or {})))(
         self:get_all_package_specs()
     )
     return self.buffer
@@ -158,6 +158,17 @@ function GitHubRegistrySource:get_display_name()
     else
         return ("github.com/%s [uninstalled]"):format(self.repo)
     end
+end
+
+function GitHubRegistrySource:serialize()
+    local info = self:get_info()
+    return {
+        proto = "github",
+        namespace = self.spec.namespace,
+        name = self.spec.name,
+        version = info.version,
+        checksums = info.checksums,
+    }
 end
 
 function GitHubRegistrySource:__tostring()

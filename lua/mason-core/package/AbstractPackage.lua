@@ -16,6 +16,7 @@ local Semaphore = require("mason-core.async.control").Semaphore
 ---@class AbstractPackage : EventEmitter
 ---@field name string
 ---@field spec RegistryPackageSpec
+---@field registry RegistrySource
 ---@field private install_handle InstallHandle? The currently associated installation handle.
 ---@field private uninstall_handle InstallHandle? The currently associated uninstallation handle.
 local AbstractPackage = {}
@@ -33,11 +34,22 @@ AbstractPackage.DEFAULT_INSTALL_OPTS = {
 }
 
 ---@param spec RegistryPackageSpec
-function AbstractPackage:new(spec)
+---@param reg RegistrySource
+function AbstractPackage:new(spec, reg)
     local instance = EventEmitter.new(self)
     instance.name = spec.name -- for convenient access
     instance.spec = spec
+    instance.registry = reg
     return instance
+end
+
+---@param spec RegistryPackageSpec
+---@param reg RegistrySource
+function AbstractPackage:update(spec, reg)
+    self.name = spec.name -- shouldn't be necessary but might as well
+    self.spec = spec
+    self.registry = reg
+    return self
 end
 
 ---@return boolean
